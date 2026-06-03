@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoTunnel-X Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-zinc-950 text-zinc-100">
+  <main class="min-h-screen grid place-items-center px-4">
+    <form method="post" action="/login" class="w-full max-w-sm border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
+      <div class="mb-6">
+        <h1 class="text-2xl font-semibold tracking-normal">AutoTunnel-X</h1>
+        <p class="mt-1 text-sm text-zinc-400">Management panel</p>
+      </div>
+      {% if error %}
+      <div class="mb-4 border border-red-700 bg-red-950 px-3 py-2 text-sm text-red-100">{{ error }}</div>
+      {% endif %}
+      <label class="block text-sm text-zinc-300" for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" class="mt-1 mb-4 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 outline-none focus:border-cyan-500" required>
+      <label class="block text-sm text-zinc-300" for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" class="mt-1 mb-6 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 outline-none focus:border-cyan-500" required>
+      <button class="w-full bg-cyan-500 px-4 py-2 font-medium text-zinc-950 hover:bg-cyan-400" type="submit">Sign in</button>
+    </form>
+  </main>
+</body>
+</html>

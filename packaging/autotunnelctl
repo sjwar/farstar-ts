@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+exec /opt/autotunnel-x/venv/bin/autotunnelctl "$@"

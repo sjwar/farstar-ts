@@ -1,0 +1,15 @@
+html {
+  color-scheme: dark;
+}
+
+canvas {
+  width: 100%;
+  max-width: 100%;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+}

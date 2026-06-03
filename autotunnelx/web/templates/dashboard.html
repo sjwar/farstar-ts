@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoTunnel-X</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+  <header class="border-b border-zinc-800 bg-zinc-950/95">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div>
+        <h1 class="text-xl font-semibold tracking-normal">AutoTunnel-X</h1>
+        <p class="text-xs text-zinc-400">{{ config.role }} · {{ config.node_id }}</p>
+      </div>
+      <nav class="flex items-center gap-3 text-sm">
+        <span class="text-zinc-400">{{ user.sub }}</span>
+        <a class="border border-zinc-700 px-3 py-1 hover:border-cyan-500" href="/logout">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto grid max-w-7xl gap-4 px-4 py-4 xl:grid-cols-[1fr_380px]">
+    <section class="space-y-4">
+      <div class="border border-zinc-800 bg-zinc-900">
+        <div class="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+          <h2 class="font-medium">Tunnel Matrix</h2>
+          <span id="status-count" class="text-xs text-zinc-400"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-zinc-950 text-left text-xs uppercase text-zinc-500">
+              <tr>
+                <th class="px-3 py-2">State</th>
+                <th class="px-3 py-2">Tunnel</th>
+                <th class="px-3 py-2">Mode</th>
+                <th class="px-3 py-2">Latency</th>
+                <th class="px-3 py-2">Jitter</th>
+                <th class="px-3 py-2">Loss</th>
+                <th class="px-3 py-2">Throughput</th>
+                <th class="px-3 py-2">Score</th>
+                <th class="px-3 py-2">Active</th>
+              </tr>
+            </thead>
+            <tbody id="status-body" class="divide-y divide-zinc-800"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-2">
+        <div class="border border-zinc-800 bg-zinc-900 p-4">
+          <h2 class="mb-3 font-medium">Latency History</h2>
+          <canvas id="latency-chart" height="160"></canvas>
+        </div>
+        <div class="border border-zinc-800 bg-zinc-900 p-4">
+          <h2 class="mb-3 font-medium">Throughput History</h2>
+          <canvas id="throughput-chart" height="160"></canvas>
+        </div>
+      </div>
+
+      <div class="border border-zinc-800 bg-zinc-900">
+        <div class="border-b border-zinc-800 px-4 py-3">
+          <h2 class="font-medium">Live Engine Log</h2>
+        </div>
+        <pre id="log-stream" class="h-72 overflow-auto p-4 text-xs text-zinc-300"></pre>
+      </div>
+    </section>
+
+    <aside class="space-y-4">
+      <form method="post" action="/api/manual-override" class="border border-zinc-800 bg-zinc-900 p-4">
+        <h2 class="mb-3 font-medium">Manual Override</h2>
+        <select id="override-select" name="name" class="mb-3 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+          <option value="">Automatic</option>
+        </select>
+        <button class="w-full bg-cyan-500 px-3 py-2 font-medium text-zinc-950 hover:bg-cyan-400" type="submit">Apply</button>
+      </form>
+
+      <form method="post" action="/api/config" class="border border-zinc-800 bg-zinc-900 p-4">
+        <h2 class="mb-3 font-medium">Configuration</h2>
+        <label class="text-xs text-zinc-400" for="peer_host">Peer host</label>
+        <input id="peer_host" name="peer_host" value="{{ config.peer.host }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="peer_api_url">Peer API URL</label>
+        <input id="peer_api_url" name="peer_api_url" value="{{ config.peer.api_url }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="peer_bootstrap_token">Bootstrap token</label>
+        <input id="peer_bootstrap_token" name="peer_bootstrap_token" value="{{ config.peer.bootstrap_token }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="routing_mode">Routing mode</label>
+        <select id="routing_mode" name="routing_mode" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+          <option value="failover" {% if config.routing.mode == "failover" %}selected{% endif %}>Failover</option>
+          <option value="loadbalance" {% if config.routing.mode == "loadbalance" %}selected{% endif %}>Load balance</option>
+        </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-zinc-400" for="loss">Loss %</label>
+            <input id="loss" name="packet_loss_threshold_pct" type="number" min="0" step="0.1" value="{{ config.routing.packet_loss_threshold_pct }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-xs text-zinc-400" for="latency">Latency ms</label>
+            <input id="latency" name="latency_threshold_ms" type="number" min="1" step="1" value="{{ config.routing.latency_threshold_ms }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+          </div>
+        </div>
+        <label class="text-xs text-zinc-400" for="ssh_user">SSH user</label>
+        <input id="ssh_user" name="ssh_user" value="{{ config.credentials.ssh_user }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="ssh_key_path">SSH private key</label>
+        <input id="ssh_key_path" name="ssh_key_path" value="{{ config.credentials.ssh_key_path }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="cloudflared_token">Cloudflared token</label>
+        <input id="cloudflared_token" name="cloudflared_token" value="{{ config.credentials.cloudflared_token }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="cloudflared_hostname">Cloudflared hostname</label>
+        <input id="cloudflared_hostname" name="cloudflared_hostname" value="{{ config.credentials.cloudflared_hostname }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="cdn_host">CDN host</label>
+        <input id="cdn_host" name="cdn_host" value="{{ config.credentials.cdn_host }}" class="mb-3 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <label class="text-xs text-zinc-400" for="dns_tunnel_domain">DNS tunnel domain</label>
+        <input id="dns_tunnel_domain" name="dns_tunnel_domain" value="{{ config.credentials.dns_tunnel_domain }}" class="mb-4 mt-1 w-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+        <button class="w-full border border-cyan-500 px-3 py-2 font-medium text-cyan-200 hover:bg-cyan-950" type="submit">Save</button>
+      </form>
+    </aside>
+  </main>
+  <script>
+    window.ATX_MANUAL_OVERRIDE = {{ manual_override|tojson }};
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

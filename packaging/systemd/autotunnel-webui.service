@@ -1,0 +1,20 @@
+[Unit]
+Description=AutoTunnel-X Web UI
+After=network-online.target autotunnel-engine.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Environment=AUTOTUNNEL_CONFIG=/etc/autotunnel-x/config.yaml
+WorkingDirectory=/opt/autotunnel-x
+ExecStart=/opt/autotunnel-x/venv/bin/autotunnelctl web --config /etc/autotunnel-x/config.yaml
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=25
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

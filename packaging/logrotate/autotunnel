@@ -1,0 +1,13 @@
+/var/log/autotunnel/*.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+    create 0640 root adm
+    sharedscripts
+    postrotate
+        systemctl kill -s HUP autotunnel-engine.service >/dev/null 2>&1 || true
+        systemctl kill -s HUP autotunnel-webui.service >/dev/null 2>&1 || true
+    endscript
+}
